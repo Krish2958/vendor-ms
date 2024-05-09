@@ -64,12 +64,11 @@ python manage.py runserver
 - **PUT /api/performance/{id}/**: Update a specific historical performance record.
 - **DELETE /api/performance/{id}/**: Delete a specific historical performance record.
 
-## Authentication
+## Documentation & Testing
 
-All endpoints require token-based authentication. Obtain an access token by authenticating with the API using your username and password. Include the access token in the Authorization header of your requests:
-
+For More Detailed Documentation and Testing visit 
 ```
-Authorization: Bearer <access_token>
+http://127.0.0.1:8000/documentation/
 ```
 
 ## Example Usage
