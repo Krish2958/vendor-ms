@@ -1,10 +1,14 @@
-from rest_framework import status, viewsets
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .models import Vendor
-from .serializers import VendorSerializer
+from .models import HistoricalPerformance, PurchaseOrder, Vendor
+from .serializers import (
+    HistoricalPerformanceSerializer,
+    PurchaseOrderSerializer,
+    VendorSerializer,
+)
 
 
 class VendorViewSet(viewsets.ModelViewSet):
@@ -12,36 +16,31 @@ class VendorViewSet(viewsets.ModelViewSet):
     serializer_class = VendorSerializer
     permission_classes = [AllowAny]
 
-    @action(detail=False, methods=["POST"], url_path="")
-    def create_vendor(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @action(detail=False, methods=["GET"], url_path="")
-    def list_vendors(self, request):
-        vendors = self.queryset
-        serializer = self.serializer_class(vendors, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["GET"], url_path="")
-    def retrieve_vendor(self, request, pk=None):
+    @action(detail=True, methods=["GET"], url_path="performance")
+    def get_vendor_performance(self, request, pk=None):
         vendor = self.get_object()
-        serializer = self.serializer_class(vendor)
-        return Response(serializer.data)
+        performance_metrics = {
+            "on_time_delivery_rate": vendor.calculate_on_time_delivery_rate(),
+            "quality_rating_avg": vendor.calculate_quality_rating_avg(),
+            "average_response_time": vendor.calculate_average_response_time(),
+            "fulfillment_rate": vendor.calculate_fulfillment_rate(),
+        }
+        return Response(performance_metrics)
 
-    @action(detail=True, methods=["PUT"], url_path="")
-    def update_vendor(self, request, pk=None):
-        vendor = self.get_object()
-        serializer = self.serializer_class(vendor, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
 
-    @action(detail=True, methods=["DELETE"], url_path="")
-    def delete_vendor(self, request, pk=None):
-        vendor = self.get_object()
-        message = f"Vendor is deleted"
-        vendor.delete()
-        return Response({"message": message})
+class PurchaseOrderViewSet(viewsets.ModelViewSet):
+    queryset = PurchaseOrder.objects.all()
+    serializer_class = PurchaseOrderSerializer
+    permission_classes = [AllowAny]
+
+    @action(detail=True, methods=["POST"], url_path="acknowledge")
+    def acknowledge_purchase_order(self, request, pk=None):
+        purchase_order = self.get_object()
+        purchase_order.acknowledge()
+        return Response({"detail": "Purchase order acknowledged successfully"})
+
+
+class HistoricalPerformanceViewset(viewsets.ModelViewSet):
+    queryset = HistoricalPerformance.objects.all()
+    serializer_class = HistoricalPerformanceSerializer
+    permission_classes = [AllowAny]
